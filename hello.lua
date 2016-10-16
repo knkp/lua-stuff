@@ -15,3 +15,5 @@ if string.find(inputStr, "hello") then
 else
 	print("didn't find it")
 end
+
+print("hello madi")
