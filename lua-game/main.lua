@@ -11,6 +11,7 @@ bulletImg = nil
 
 -- Entity Storage
 bullets = {} -- array of current bullets being drawn and updated
+bullets2 = {} -- array of current bullets being drawn and updated
 
 --More timers
 createEnemyTimerMax = 0.4
@@ -20,13 +21,15 @@ createEnemyTimer = createEnemyTimerMax
 enemyImg = nil -- Like other images we'll pull this in during out love.load function
   
 -- More storage
-enemies = {} -- array of current enemies on screen
+player2 = { x = 200, y = 10, speed = 150, img = nil }
+enemyImg = nil 
 
 player = { x = 200, y = 710, speed = 150, img = nil }
 playerImg = nil
 
 
 isAlive = true
+isAlive2 = true
 score = 0
 
 
@@ -46,7 +49,7 @@ end
 function love.load(arg)
 	player.img = love.graphics.newImage('assets/plane.png')
 	bulletImg = love.graphics.newImage('assets/bullet.png')
-	enemyImg = love.graphics.newImage('assets/enemy.png')
+	player2.img = love.graphics.newImage('assets/enemy.png')
 end
 
 -- Updating
@@ -73,7 +76,15 @@ function love.update(dt)
 		canShootTimer = canShootTimerMax
 	end
 	
-	
+	if love.keyboard.isDown('ralt', 'lalt', 'alt') and canShoot then
+		-- Create some bullets
+		newBullet = { x = player2.x , y = player2.y +30, img = bulletImg }
+		secondNewBullet = { x = player2.x + (player2.img:getWidth()), y = player2.y +30, img = bulletImg }
+		table.insert(bullets2, newBullet)
+		table.insert(bullets2, secondNewBullet)
+		canShoot = false
+		canShootTimer = canShootTimerMax
+	end
 
 	if love.keyboard.isDown('left','a') then
 		if player.x > 0 then -- binds us to the map
@@ -86,6 +97,16 @@ function love.update(dt)
 		end
 	end
 	 
+	 if love.keyboard.isDown('1','z') then
+		if player2.x > 0 then -- binds us to the map
+			player2.x = (player2.x - (player2.speed*dt))
+		end
+		
+		elseif love.keyboard.isDown('2','c') then
+		if player2.x < (love.graphics.getWidth() - player2.img:getWidth())then
+			player2.x = (player2.x + (player2.speed*dt))
+		end
+	end
 	-- update the positions of bullets
 	for i, bullet in ipairs(bullets) do
 		bullet.y = bullet.y - (250 * dt)
@@ -94,62 +115,74 @@ function love.update(dt)
 			table.remove(bullets, i)
 		end
 	end
-	
-	-- Time out enemy creation
-	createEnemyTimer = createEnemyTimer - (1 * dt)
-	if createEnemyTimer < 0 then
-		createEnemyTimer = createEnemyTimerMax
+		-- update the positions of bullets2
+	for i, bullet in ipairs(bullets2) do
+		bullet.y = bullet.y + (250 * dt)
 
-		-- Create an enemy
-		randomNumber = math.random(10, love.graphics.getWidth() - 10)
-		newEnemy = { x = randomNumber, y = -10, img = enemyImg }
-		table.insert(enemies, newEnemy)
-	end
-	
-	-- update the positions of enemies
-	for i, enemy in ipairs(enemies) do
-		enemy.y = enemy.y + (200 * dt)
-
-		if enemy.y > 850 then -- remove enemies when they pass off the screen
-			table.remove(enemies, i)
+		if bullet.y > (love.graphics:getHeight()) then -- remove bullets when they pass off the screen
+			--table.remove(bullets2, i)
 		end
 	end
-	
-	-- run our collision detection
-	-- Since there will be fewer enemies on screen than bullets we'll loop them first
-	-- Also, we need to see if the enemies hit our player
-	for i, enemy in ipairs(enemies) do
-		for j, bullet in ipairs(bullets) do
-			if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
-				table.remove(bullets, j)
-				table.remove(enemies, i)
-				score = score + 1
-			end
+  
+	for j, bullet in ipairs(bullets) do
+		if CheckCollision(player2.x, player2.y, player2.img:getWidth(), 0, bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
+			isAlive2 = false
+			print("player2 got shot")
 		end
-
-		if CheckCollision(enemy.x, enemy.y, enemy.img:getWidth(), enemy.img:getHeight(), player.x, player.y, player.img:getWidth(), player.img:getHeight()) 
-		and isAlive then
-			table.remove(enemies, i)
+	end
+			
+	for j, bullet in ipairs(bullets2) do
+		if CheckCollision(player.x, player.y, player.img:getWidth(), player.img:getHeight(), bullet.x, bullet.y, bullet.img:getWidth(), bullet.img:getHeight()) then
 			isAlive = false
+			print("player got shot")
 		end
 	end
+
+
+	
+
 	
 	if not isAlive and love.keyboard.isDown('r') then
 		-- remove all our bullets and enemies from screen
 		bullets = {}
-		enemies = {}
+		bullets2 = {}
+		--enemies = {}
 
 		-- reset timers
 		canShootTimer = canShootTimerMax
-		createEnemyTimer = createEnemyTimerMax
+		--createEnemyTimer = createEnemyTimerMax
+
+		-- move player back to default position
+		player.x = 50
+		player.y = 710
+		
+		player2.x = love.graphics.getWidth()-50
+		player2.y = 10
+		
+		-- reset our game state
+		score = 0
+		isAlive = true
+	end
+	
+	if not isAlive2 and love.keyboard.isDown('r') then
+		-- remove all our bullets and enemies from screen
+		bullets = {}
+		bullets2 = {}
+		--enemies = {}
+
+		-- reset timers
+		canShootTimer = canShootTimerMax
+		--createEnemyTimer = createEnemyTimerMax
 
 		-- move player back to default position
 		player.x = 50
 		player.y = 710
 
+		player2.x = love.graphics.getWidth()-100
+		player2.y = 10
 		-- reset our game state
 		score = 0
-		isAlive = true
+		isAlive2 = true
 	end
 end
 
@@ -159,12 +192,18 @@ function love.draw(dt)
 	else
 		love.graphics.print("Press 'R' to restart", love.graphics:getWidth()/2-50, love.graphics:getHeight()/2-10)
 	end
-	
+	if isAlive2 then
+		love.graphics.draw(player2.img, player2.x, player2.y)
+	else
+		love.graphics.print("Press 'R' to restart", love.graphics:getWidth()/2-50, love.graphics:getHeight()/2-10)
+	end
 	for i, bullet in ipairs(bullets) do
 	  love.graphics.draw(bullet.img, bullet.x, bullet.y)
 	end
-	
-	for i, enemy in ipairs(enemies) do
-		love.graphics.draw(enemy.img, enemy.x, enemy.y)
+		for i, bullet in ipairs(bullets2) do
+	  love.graphics.draw(bullet.img, bullet.x, bullet.y)
 	end
+	--for i, enemy in ipairs(enemies) do
+		--love.graphics.draw(enemy.img, enemy.x, enemy.y)
+--	end
 end
