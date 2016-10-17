@@ -65,8 +65,10 @@ function love.update(dt)
 	
 	if love.keyboard.isDown(' ', 'rctrl', 'lctrl', 'ctrl') and canShoot then
 		-- Create some bullets
-		newBullet = { x = player.x + (player.img:getWidth()/2), y = player.y, img = bulletImg }
+		newBullet = { x = player.x , y = player.y, img = bulletImg }
+		secondNewBullet = { x = player.x + (player.img:getWidth()), y = player.y, img = bulletImg }
 		table.insert(bullets, newBullet)
+		table.insert(bullets, secondNewBullet)
 		canShoot = false
 		canShootTimer = canShootTimerMax
 	end
@@ -75,15 +77,15 @@ function love.update(dt)
 
 	if love.keyboard.isDown('left','a') then
 		if player.x > 0 then -- binds us to the map
-			player.x = player.x - (player.speed*dt)
+			player.x = (player.x - (player.speed*dt))
 		end
 		
 		elseif love.keyboard.isDown('right','d') then
-		if player.x < (love.graphics.getWidth() - player.img:getWidth()) then
-			player.x = player.x + (player.speed*dt)
+		if player.x < (love.graphics.getWidth() - player.img:getWidth())then
+			player.x = (player.x + (player.speed*dt))
 		end
 	end
-	
+	 
 	-- update the positions of bullets
 	for i, bullet in ipairs(bullets) do
 		bullet.y = bullet.y - (250 * dt)
